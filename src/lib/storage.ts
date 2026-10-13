@@ -5,6 +5,7 @@
  * Strictly operates on real database records without injecting hardcoded mock data.
  */
 
+import crypto from 'crypto';
 import { ConnectedAccount, AutomationRule, CommentDispatch } from './types';
 import { getSupabaseServiceRoleClient, getSupabaseClient, isSupabaseConfigured } from './supabase';
 
@@ -58,12 +59,21 @@ export async function fetchRules(accountId?: string): Promise<AutomationRule[]> 
 
 export async function saveRule(rule: Partial<AutomationRule>): Promise<AutomationRule> {
   const supabase = getDb();
-  const id = rule.id || `rule_${Date.now()}`;
+  // Ensure valid UUID
+  const id = (rule.id && rule.id.includes('-') && rule.id.length >= 32) ? rule.id : crypto.randomUUID();
   const now = new Date().toISOString();
+
+  let accountId = rule.account_id;
+  if (!accountId && isSupabaseConfigured && supabase) {
+    const { data: accounts } = await supabase.from('connected_accounts').select('id').limit(1);
+    if (accounts && accounts[0]) {
+      accountId = accounts[0].id;
+    }
+  }
 
   const newRule: AutomationRule = {
     id,
-    account_id: rule.account_id || '',
+    account_id: accountId || '',
     name: rule.name || 'Untitled Automation',
     trigger_keywords: rule.trigger_keywords || ['link'],
     reply_template: rule.reply_template || 'Hey {{username}}! Thanks for commenting.',
@@ -85,8 +95,9 @@ export async function saveRule(rule: Partial<AutomationRule>): Promise<Automatio
 
     if (error) {
       console.error('[Storage] Error saving rule to Supabase:', error.message);
+      throw new Error(`Failed to save automation rule: ${error.message}`);
     }
-    if (!error && data) {
+    if (data) {
       return data as AutomationRule;
     }
   }

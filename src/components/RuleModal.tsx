@@ -70,13 +70,20 @@ export function RuleModal({ isOpen, onClose, rule, accounts, activeAccountId, on
       return;
     }
 
+    const targetAccountId = accountId || accounts.find(a => a.id === activeAccountId)?.id || accounts[0]?.id;
+    if (!targetAccountId) {
+      setError('Please select a connected Instagram account first.');
+      setLoading(false);
+      return;
+    }
+
     try {
       const res = await fetch('/api/automations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id: rule?.id,
-          account_id: accountId,
+          account_id: targetAccountId,
           name: name.trim() || 'Untitled Automation',
           trigger_keywords: parsedKeywords,
           reply_template: template,
