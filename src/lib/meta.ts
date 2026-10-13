@@ -138,12 +138,15 @@ export async function getInstagramUserProfile(
       return { error: data.error || data };
     }
 
+    const rawType = String(data.account_type || '').toUpperCase();
+    const accountType: 'BUSINESS' | 'CREATOR' = rawType.includes('CREATOR') ? 'CREATOR' : 'BUSINESS';
+
     return {
       user_id: data.user_id || data.id,
       username: data.username,
       name: data.name || data.username,
       profile_picture_url: data.profile_picture_url || null,
-      account_type: data.account_type || 'BUSINESS',
+      account_type: accountType,
     };
   } catch (err) {
     return { error: (err as Error).message };

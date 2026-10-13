@@ -76,13 +76,16 @@ export async function GET(req: NextRequest) {
 
   const supabase = getSupabaseServiceRoleClient() || getSupabaseClient();
   if (supabase) {
+    const rawType = String(profile.account_type || '').toUpperCase();
+    const normalizedAccountType: 'BUSINESS' | 'CREATOR' = rawType.includes('CREATOR') ? 'CREATOR' : 'BUSINESS';
+
     // Upsert into connected_accounts
     const { error: dbError } = await supabase.from('connected_accounts').upsert({
       instagram_user_id: igUserId,
       username: profile.username || 'unknown',
       name: profile.name || profile.username || 'Instagram Professional',
       profile_picture_url: profile.profile_picture_url || null,
-      account_type: profile.account_type || 'BUSINESS',
+      account_type: normalizedAccountType,
       encrypted_access_token: encryptedToken,
       token_expires_at: expiresAt,
       webhook_subscribed: webhookSub.success,
