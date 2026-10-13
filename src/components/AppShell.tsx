@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import { Sidebar } from './Sidebar';
 import { ConnectedAccount } from '@/lib/types';
-import { DEMO_ACCOUNTS } from '@/lib/demo-data';
 import { SimulationModal } from './SimulationModal';
 import { Sparkles, ExternalLink, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
@@ -14,9 +13,9 @@ interface Props {
   isLiveConfigured?: boolean;
 }
 
-export function AppShell({ children, initialAccounts = DEMO_ACCOUNTS, isLiveConfigured = false }: Props) {
+export function AppShell({ children, initialAccounts = [], isLiveConfigured = false }: Props) {
   const [accounts, setAccounts] = useState<ConnectedAccount[]>(initialAccounts);
-  const [activeAccountId, setActiveAccountId] = useState<string>(initialAccounts[0]?.id || 'acc_demo_1');
+  const [activeAccountId, setActiveAccountId] = useState<string>(initialAccounts[0]?.id || '');
   const [isSimulationOpen, setIsSimulationOpen] = useState(false);
 
   useEffect(() => {
@@ -24,10 +23,14 @@ export function AppShell({ children, initialAccounts = DEMO_ACCOUNTS, isLiveConf
     fetch('/api/accounts')
       .then(res => res.json())
       .then(data => {
-        if (data.accounts && data.accounts.length > 0) {
+        if (data.accounts) {
           setAccounts(data.accounts);
-          if (!data.accounts.find((a: ConnectedAccount) => a.id === activeAccountId)) {
-            setActiveAccountId(data.accounts[0].id);
+          if (data.accounts.length > 0) {
+            if (!activeAccountId || !data.accounts.find((a: ConnectedAccount) => a.id === activeAccountId)) {
+              setActiveAccountId(data.accounts[0].id);
+            }
+          } else {
+            setActiveAccountId('');
           }
         }
       })
@@ -53,10 +56,14 @@ export function AppShell({ children, initialAccounts = DEMO_ACCOUNTS, isLiveConf
           <div className="flex items-center gap-3">
             <span className="text-xs text-zinc-400 font-medium">Active Account:</span>
             <span className="px-2 py-0.5 rounded-full bg-zinc-900 border border-zinc-800 text-xs font-mono text-zinc-200">
-              @{activeAccount?.username || 'none'}
+              {activeAccount?.username ? `@${activeAccount.username}` : 'No account connected'}
             </span>
-            <span className="text-zinc-600">/</span>
-            <span className="text-xs text-zinc-500">{activeAccount?.name || 'Instagram'}</span>
+            {activeAccount && (
+              <>
+                <span className="text-zinc-600">/</span>
+                <span className="text-xs text-zinc-500">{activeAccount.name || 'Instagram'}</span>
+              </>
+            )}
           </div>
 
           <div className="flex items-center gap-3">

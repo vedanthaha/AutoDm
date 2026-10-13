@@ -143,38 +143,54 @@ export default function OverviewPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {accounts.map(acc => (
-            <div key={acc.id} className="p-4 rounded-xl bg-zinc-900/70 border border-zinc-800 flex items-start justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-zinc-800 border border-zinc-700 overflow-hidden flex items-center justify-center shrink-0">
-                  {acc.profile_picture_url ? (
-                    <img src={acc.profile_picture_url} alt={acc.username} className="w-full h-full object-cover" />
-                  ) : (
-                    <Instagram className="w-5 h-5 text-zinc-400" />
-                  )}
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-bold text-white">@{acc.username}</span>
-                    <span className="px-1.5 py-0.5 rounded text-[10px] bg-emerald-950/60 text-emerald-400 border border-emerald-800/40 font-mono">
-                      Active
-                    </span>
-                  </div>
-                  <p className="text-xs text-zinc-400">{acc.name}</p>
-                  <p className="text-[10px] text-zinc-500 mt-1 font-mono">
-                    Type: {acc.account_type || 'BUSINESS'} • IG ID: {acc.instagram_user_id}
-                  </p>
-                </div>
-              </div>
-
-              <div className="text-right">
-                <div className="inline-flex items-center gap-1 text-[11px] text-zinc-400">
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>{acc.permissions?.length || 3}/3 Scopes</span>
-                </div>
-              </div>
+          {accounts.length === 0 ? (
+            <div className="col-span-1 md:col-span-2 p-6 rounded-xl bg-zinc-900/40 border border-dashed border-zinc-800 text-center space-y-2">
+              <p className="text-xs font-semibold text-zinc-300">No Instagram accounts connected yet</p>
+              <p className="text-[11px] text-zinc-500 max-w-sm mx-auto">
+                Connect your Instagram Professional or Creator account via Instagram Login for Business to start automating replies.
+              </p>
+              <Link
+                href="/accounts"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 mt-2 rounded-lg bg-zinc-100 hover:bg-white text-zinc-950 text-xs font-semibold transition-colors"
+              >
+                <Instagram className="w-3.5 h-3.5" />
+                <span>Connect Account</span>
+              </Link>
             </div>
-          ))}
+          ) : (
+            accounts.map(acc => (
+              <div key={acc.id} className="p-4 rounded-xl bg-zinc-900/70 border border-zinc-800 flex items-start justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-zinc-800 border border-zinc-700 overflow-hidden flex items-center justify-center shrink-0">
+                    {acc.profile_picture_url ? (
+                      <img src={acc.profile_picture_url} alt={acc.username} className="w-full h-full object-cover" />
+                    ) : (
+                      <Instagram className="w-5 h-5 text-zinc-400" />
+                    )}
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-bold text-white">@{acc.username}</span>
+                      <span className="px-1.5 py-0.5 rounded text-[10px] bg-emerald-950/60 text-emerald-400 border border-emerald-800/40 font-mono">
+                        Active
+                      </span>
+                    </div>
+                    <p className="text-xs text-zinc-400">{acc.name}</p>
+                    <p className="text-[10px] text-zinc-500 mt-1 font-mono">
+                      Type: {acc.account_type || 'BUSINESS'} • IG ID: {acc.instagram_user_id}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="text-right">
+                  <div className="inline-flex items-center gap-1 text-[11px] text-zinc-400">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>{acc.permissions?.length || 3}/3 Scopes</span>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
 
@@ -201,28 +217,36 @@ export default function OverviewPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-800/60">
-                {dispatches.slice(0, 5).map(disp => (
-                  <tr key={disp.comment_id} className="hover:bg-zinc-800/30 transition-colors">
-                    <td className="py-3 px-4">
-                      <StatusBadge status={disp.status} size="sm" />
-                    </td>
-                    <td className="py-3 px-4 font-medium text-zinc-200">
-                      @{disp.author_username}
-                    </td>
-                    <td className="py-3 px-4 text-zinc-300 max-w-xs truncate">
-                      &quot;{disp.comment_text}&quot;
-                    </td>
-                    <td className="py-3 px-4 font-mono text-[11px] text-emerald-400">
-                      {disp.keyword_matched ? `"${disp.keyword_matched}"` : <span className="text-zinc-600">—</span>}
-                    </td>
-                    <td className="py-3 px-4 text-zinc-400 max-w-xs truncate font-mono text-[11px]">
-                      {disp.reply_text ? disp.reply_text : <span className="text-zinc-600">—</span>}
-                    </td>
-                    <td className="py-3 px-4 text-right text-zinc-500 font-mono text-[11px]">
-                      {new Date(disp.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                {dispatches.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="py-8 text-center text-zinc-500 font-mono text-xs">
+                      No automated comment replies dispatched yet.
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  dispatches.slice(0, 5).map(disp => (
+                    <tr key={disp.comment_id} className="hover:bg-zinc-800/30 transition-colors">
+                      <td className="py-3 px-4">
+                        <StatusBadge status={disp.status} size="sm" />
+                      </td>
+                      <td className="py-3 px-4 font-medium text-zinc-200">
+                        @{disp.author_username}
+                      </td>
+                      <td className="py-3 px-4 text-zinc-300 max-w-xs truncate">
+                        &quot;{disp.comment_text}&quot;
+                      </td>
+                      <td className="py-3 px-4 font-mono text-[11px] text-emerald-400">
+                        {disp.keyword_matched ? `"${disp.keyword_matched}"` : <span className="text-zinc-600">—</span>}
+                      </td>
+                      <td className="py-3 px-4 text-zinc-400 max-w-xs truncate font-mono text-[11px]">
+                        {disp.reply_text ? disp.reply_text : <span className="text-zinc-600">—</span>}
+                      </td>
+                      <td className="py-3 px-4 text-right text-zinc-500 font-mono text-[11px]">
+                        {new Date(disp.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

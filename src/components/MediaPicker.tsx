@@ -66,6 +66,10 @@ export function MediaPicker({ accountId, selectedPostId, onSelect }: Props) {
           <div className="py-6 text-center text-xs text-zinc-500 font-mono animate-pulse">
             Loading your Instagram media gallery...
           </div>
+        ) : media.length === 0 ? (
+          <div className="py-6 text-center text-xs text-zinc-500 font-mono border border-dashed border-zinc-800 rounded-lg bg-zinc-950/40">
+            No published posts or Reels found on this account yet.
+          </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 max-h-56 overflow-y-auto p-1 border border-zinc-800/80 rounded-lg bg-zinc-950/60">
             {media.map(item => {

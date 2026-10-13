@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getSupabaseClient, isSupabaseConfigured } from '@/lib/supabase';
+import { getSupabaseServiceRoleClient, getSupabaseClient, isSupabaseConfigured } from '@/lib/supabase';
 import { decryptToken } from '@/lib/crypto';
 import { unsubscribeAccountWebhooks } from '@/lib/meta';
 
@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing account_id' }, { status: 400 });
     }
 
-    const supabase = getSupabaseClient();
+    const supabase = getSupabaseServiceRoleClient() || getSupabaseClient();
     if (isSupabaseConfigured && supabase) {
       const { data: account } = await supabase
         .from('connected_accounts')
@@ -26,10 +26,16 @@ export async function POST(req: NextRequest) {
         .maybeSingle();
 
       if (account) {
-        const token = decryptToken(account.encrypted_access_token);
-        if (token) {
-          // Unsubscribe from webhooks on Meta
-          await unsubscribeAccountWebhooks(account.instagram_user_id, token);
+        if (account.encrypted_access_token) {
+          const token = decryptToken(account.encrypted_access_token);
+          if (token) {
+            // Unsubscribe from webhooks on Meta
+            try {
+              await unsubscribeAccountWebhooks(account.instagram_user_id, token);
+            } catch (unsubErr) {
+              console.warn('[Disconnect] Failed to unsubscribe webhooks:', (unsubErr as Error).message);
+            }
+          }
         }
         await supabase.from('connected_accounts').delete().eq('id', account_id);
       }

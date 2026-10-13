@@ -217,15 +217,15 @@ export async function POST(req: NextRequest) {
             }
           }
         } else {
-          // Fallback / Demo storage
+          // In-memory fallback
           await recordDispatch({
             comment_id: commentId,
-            account_id: 'acc_demo_1',
+            account_id: igUserId || 'unknown',
             author_username: authorUsername,
             media_id: mediaId,
             comment_text: commentText,
             status: 'delivered',
-            meta_message_id: `sim_msg_${Date.now()}`,
+            meta_message_id: `msg_${Date.now()}`,
             retry_count: 0,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),

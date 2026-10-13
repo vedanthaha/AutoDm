@@ -1,28 +1,35 @@
 /**
  * Unified Storage Layer
  *
- * Provides transparent access to either live Supabase PostgreSQL
- * or interactive Demo mode state with in-memory persistence.
+ * Connects directly to Supabase PostgreSQL using service role or client privileges.
+ * Strictly operates on real database records without injecting hardcoded mock data.
  */
 
 import { ConnectedAccount, AutomationRule, CommentDispatch } from './types';
-import { DEMO_ACCOUNTS, DEMO_RULES, DEMO_DISPATCHES } from './demo-data';
-import { getSupabaseClient, isSupabaseConfigured } from './supabase';
+import { getSupabaseServiceRoleClient, getSupabaseClient, isSupabaseConfigured } from './supabase';
 
-// In-memory demo state for active server/client sessions
-const inMemoryAccounts: ConnectedAccount[] = [...DEMO_ACCOUNTS];
-let inMemoryRules: AutomationRule[] = [...DEMO_RULES];
-const inMemoryDispatches: CommentDispatch[] = [...DEMO_DISPATCHES];
+function getDb() {
+  return getSupabaseServiceRoleClient() || getSupabaseClient();
+}
+
+// In-memory fallback if Supabase is completely unconfigured
+const inMemoryAccounts: ConnectedAccount[] = [];
+let inMemoryRules: AutomationRule[] = [];
+const inMemoryDispatches: CommentDispatch[] = [];
 
 export async function fetchAccounts(): Promise<ConnectedAccount[]> {
-  const supabase = getSupabaseClient();
+  const supabase = getDb();
   if (isSupabaseConfigured && supabase) {
     const { data, error } = await supabase
       .from('connected_accounts')
       .select('*')
+      .eq('is_active', true)
       .order('created_at', { ascending: true });
 
-    if (!error && data && data.length > 0) {
+    if (error) {
+      console.error('[Storage] Error fetching accounts from Supabase:', error.message);
+    }
+    if (!error && data) {
       return data as ConnectedAccount[];
     }
   }
@@ -30,11 +37,14 @@ export async function fetchAccounts(): Promise<ConnectedAccount[]> {
 }
 
 export async function fetchRules(accountId?: string): Promise<AutomationRule[]> {
-  const supabase = getSupabaseClient();
+  const supabase = getDb();
   if (isSupabaseConfigured && supabase) {
     let query = supabase.from('automation_rules').select('*').order('created_at', { ascending: false });
     if (accountId) query = query.eq('account_id', accountId);
     const { data, error } = await query;
+    if (error) {
+      console.error('[Storage] Error fetching rules from Supabase:', error.message);
+    }
     if (!error && data) {
       return data as AutomationRule[];
     }
@@ -47,13 +57,13 @@ export async function fetchRules(accountId?: string): Promise<AutomationRule[]> 
 }
 
 export async function saveRule(rule: Partial<AutomationRule>): Promise<AutomationRule> {
-  const supabase = getSupabaseClient();
+  const supabase = getDb();
   const id = rule.id || `rule_${Date.now()}`;
   const now = new Date().toISOString();
 
   const newRule: AutomationRule = {
     id,
-    account_id: rule.account_id || inMemoryAccounts[0].id,
+    account_id: rule.account_id || '',
     name: rule.name || 'Untitled Automation',
     trigger_keywords: rule.trigger_keywords || ['link'],
     reply_template: rule.reply_template || 'Hey {{username}}! Thanks for commenting.',
@@ -73,12 +83,15 @@ export async function saveRule(rule: Partial<AutomationRule>): Promise<Automatio
       .select()
       .single();
 
+    if (error) {
+      console.error('[Storage] Error saving rule to Supabase:', error.message);
+    }
     if (!error && data) {
       return data as AutomationRule;
     }
   }
 
-  // Update in-memory
+  // Update in-memory fallback
   const existingIdx = inMemoryRules.findIndex(r => r.id === id);
   if (existingIdx !== -1) {
     inMemoryRules[existingIdx] = newRule;
@@ -90,10 +103,11 @@ export async function saveRule(rule: Partial<AutomationRule>): Promise<Automatio
 }
 
 export async function deleteRule(ruleId: string): Promise<boolean> {
-  const supabase = getSupabaseClient();
+  const supabase = getDb();
   if (isSupabaseConfigured && supabase) {
     const { error } = await supabase.from('automation_rules').delete().eq('id', ruleId);
     if (!error) return true;
+    console.error('[Storage] Error deleting rule:', error.message);
   }
 
   inMemoryRules = inMemoryRules.filter(r => r.id !== ruleId);
@@ -101,11 +115,14 @@ export async function deleteRule(ruleId: string): Promise<boolean> {
 }
 
 export async function fetchDispatches(accountId?: string): Promise<CommentDispatch[]> {
-  const supabase = getSupabaseClient();
+  const supabase = getDb();
   if (isSupabaseConfigured && supabase) {
     let query = supabase.from('comment_dispatches').select('*').order('created_at', { ascending: false }).limit(50);
     if (accountId) query = query.eq('account_id', accountId);
     const { data, error } = await query;
+    if (error) {
+      console.error('[Storage] Error fetching dispatches from Supabase:', error.message);
+    }
     if (!error && data) {
       return data as CommentDispatch[];
     }
@@ -118,9 +135,12 @@ export async function fetchDispatches(accountId?: string): Promise<CommentDispat
 }
 
 export async function recordDispatch(dispatch: CommentDispatch): Promise<void> {
-  const supabase = getSupabaseClient();
+  const supabase = getDb();
   if (isSupabaseConfigured && supabase) {
-    await supabase.from('comment_dispatches').upsert(dispatch);
+    const { error } = await supabase.from('comment_dispatches').upsert(dispatch);
+    if (error) {
+      console.error('[Storage] Error recording dispatch to Supabase:', error.message);
+    }
   }
 
   const existingIdx = inMemoryDispatches.findIndex(d => d.comment_id === dispatch.comment_id);

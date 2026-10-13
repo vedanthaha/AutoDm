@@ -151,7 +151,7 @@ export default function AccountsPage() {
                   <span>Token Security:</span>
                   <span className="text-zinc-300 font-mono text-[11px] flex items-center gap-1">
                     <Key className="w-3 h-3 text-zinc-500" />
-                    {maskToken('IGQV1234567890abcdef')} (AES-256-GCM)
+                    {acc.encrypted_access_token ? maskToken(acc.encrypted_access_token) : '••••••••'} (AES-256-GCM)
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-zinc-400">

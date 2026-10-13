@@ -23,6 +23,7 @@ export interface ConnectedAccount {
   name: string;
   profile_picture_url?: string;
   account_type?: 'BUSINESS' | 'CREATOR';
+  encrypted_access_token?: string;
   is_active: boolean;
   webhook_subscribed: boolean;
   token_expires_at?: string;

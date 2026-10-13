@@ -47,9 +47,9 @@ export async function POST(req: NextRequest) {
       const reply = renderReplyTemplate(matchedRule.reply_template, { username: author });
       dispatch = {
         comment_id: commentId,
-        account_id: account_id || 'acc_demo_1',
+        account_id: account_id || matchedRule.account_id || '',
         author_username: author,
-        media_id: media_id || 'sim_media_101',
+        media_id: media_id || null,
         comment_text: comment_text,
         keyword_matched: matchedKeyword || undefined,
         reply_text: reply,
@@ -63,9 +63,9 @@ export async function POST(req: NextRequest) {
     } else {
       dispatch = {
         comment_id: commentId,
-        account_id: account_id || 'acc_demo_1',
+        account_id: account_id || '',
         author_username: author,
-        media_id: media_id || 'sim_media_101',
+        media_id: media_id || null,
         comment_text: comment_text,
         status: 'ignored',
         retry_count: 0,
