@@ -11,7 +11,7 @@ import {
   subscribeAccountWebhooks
 } from '@/lib/meta';
 import { encryptToken } from '@/lib/crypto';
-import { getSupabaseServiceRoleClient } from '@/lib/supabase';
+import { getSupabaseServiceRoleClient, getSupabaseClient } from '@/lib/supabase';
 
 export const runtime = 'nodejs';
 
@@ -74,7 +74,7 @@ export async function GET(req: NextRequest) {
   // 6. Encrypt long-lived token at rest
   const encryptedToken = encryptToken(activeToken);
 
-  const supabase = getSupabaseServiceRoleClient();
+  const supabase = getSupabaseServiceRoleClient() || getSupabaseClient();
   if (supabase) {
     // Upsert into connected_accounts
     const { error: dbError } = await supabase.from('connected_accounts').upsert({
@@ -92,7 +92,10 @@ export async function GET(req: NextRequest) {
 
     if (dbError) {
       console.error('[Instagram OAuth] Database save failed:', dbError.message);
+      return NextResponse.redirect(`${appUrl}/accounts?error=${encodeURIComponent('Database save failed: ' + dbError.message)}`);
     }
+  } else {
+    return NextResponse.redirect(`${appUrl}/accounts?error=${encodeURIComponent('Database client not configured')}`);
   }
 
   const res = NextResponse.redirect(`${appUrl}/accounts?connected=true&username=${encodeURIComponent(profile.username || '')}`);
