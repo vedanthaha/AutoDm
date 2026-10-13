@@ -32,6 +32,9 @@ test-harness/*.db
 test/*.sqlite
 test/*.sqlite-journal
 
+# Reverse engineering raw captures & external targets
+raw-target/
+
 # Logs
 *.log
 npm-debug.log*
