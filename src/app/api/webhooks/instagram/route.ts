@@ -14,7 +14,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { getSupabaseServiceRoleClient } from '@/lib/supabase';
 import { matchComment, renderReplyTemplate } from '@/lib/matcher';
-import { sendPrivateReply, sendPublicCommentReply } from '@/lib/meta';
+import {
+  sendPrivateReply,
+  sendPublicCommentReply,
+  sendDirectMessage,
+  checkUserFollowsBusiness
+} from '@/lib/meta';
 import { decryptToken } from '@/lib/crypto';
 import { recordDispatch } from '@/lib/storage';
 
@@ -145,7 +150,7 @@ export async function POST(req: NextRequest) {
           // Look up account by instagram_user_id
           const { data: account } = await supabase
             .from('connected_accounts')
-            .select('id, user_id, encrypted_access_token')
+            .select('id, user_id, username, encrypted_access_token')
             .eq('instagram_user_id', igUserId)
             .maybeSingle();
 
@@ -158,7 +163,13 @@ export async function POST(req: NextRequest) {
 
             for (const r of rules || []) {
               if (r.post_id && mediaId && r.post_id !== mediaId) continue;
-              const result = matchComment(commentText, r.trigger_keywords, r.match_type);
+              const result = matchComment(commentText, {
+                triggerType: r.trigger_type || 'keywords',
+                keywords: r.trigger_keywords,
+                excludeKeywords: r.exclude_keywords || [],
+                matchType: r.match_type || 'contains',
+                matchLogic: r.match_logic || 'any',
+              });
               if (result.matched) {
                 matchedRule = r;
                 matchedKeyword = result.keyword;
@@ -167,61 +178,96 @@ export async function POST(req: NextRequest) {
             }
 
             if (matchedRule) {
-              const replyText = renderReplyTemplate(matchedRule.reply_template, {
-                username: authorUsername,
-              });
-
-              // Decrypt Page Access Token
               const pageToken = decryptToken(account.encrypted_access_token);
+              const actionType = matchedRule.action_type || 'both';
+              const shouldSendDm = matchedRule.send_dm !== undefined ? matchedRule.send_dm : (actionType === 'both' || actionType === 'dm_only');
+              const shouldSendComment = matchedRule.send_comment !== undefined ? matchedRule.send_comment : (actionType === 'both' || actionType === 'comment_only');
+              const followGateEnabled = Boolean(matchedRule.follow_gate_enabled);
 
-              // Dispatch to Meta
-              const result = await sendPrivateReply(igUserId, pageToken, commentId, replyText);
+              let followGateStatus: 'skipped' | 'follows' | 'does_not_follow' | 'unknown' = 'skipped';
+              let dmText = '';
+              let commentReplyText = '';
 
-              if (result.success) {
-                // Also dispatch Public Comment Reply directly under the user's comment
-                const publicReplyTemplate = matchedRule.comment_reply_template || 'Sent to your DM! Check your requests 📩';
-                const publicReplyText = renderReplyTemplate(publicReplyTemplate, {
-                  username: authorUsername,
-                });
+              if (followGateEnabled) {
+                const followResult = authorId ? await checkUserFollowsBusiness(authorId, pageToken) : 'UNKNOWN';
+                followGateStatus = followResult.toLowerCase() as any;
 
-                try {
-                  const commentReplyResult = await sendPublicCommentReply(commentId, pageToken, publicReplyText);
-                  if (commentReplyResult.success) {
-                    console.log(`[Webhook] Public comment reply posted: ${commentReplyResult.id}`);
-                  } else {
-                    console.warn('[Webhook] Public comment reply notice:', commentReplyResult.error);
-                  }
-                } catch (publicErr) {
-                  console.warn('[Webhook] Public comment reply error:', (publicErr as Error).message);
+                if (followResult === 'FOLLOWS') {
+                  dmText = renderReplyTemplate(matchedRule.follow_unlocked_template || matchedRule.reply_template, {
+                    username: authorUsername,
+                    account_username: account.username,
+                  });
+                } else {
+                  dmText = renderReplyTemplate(
+                    matchedRule.follow_prompt_template ||
+                      'Hey {{username}}! Follow our account @{{account_username}} to unlock your link 🚀 Once followed, reply "done" here!',
+                    {
+                      username: authorUsername,
+                      account_username: account.username,
+                    }
+                  );
                 }
+              } else {
+                dmText = renderReplyTemplate(matchedRule.reply_template, {
+                  username: authorUsername,
+                  account_username: account.username,
+                });
+              }
 
-                await supabase.from('comment_dispatches').update({
-                  account_id: account.id,
-                  user_id: account.user_id,
-                  keyword_matched: matchedKeyword,
-                  reply_text: replyText,
-                  status: 'delivered',
-                  meta_message_id: result.message_id,
-                  meta_recipient_id: result.recipient_id,
-                  fb_trace_id: result.fb_trace_id,
-                  updated_at: new Date().toISOString(),
-                }).eq('comment_id', commentId);
+              let dmResult: any = null;
+              let commentResult: any = null;
 
+              if (shouldSendDm) {
+                dmResult = await sendPrivateReply(igUserId, pageToken, commentId, dmText);
+              }
+
+              if (shouldSendComment) {
+                const publicTemplate = matchedRule.comment_reply_template || 'Sent to your DM! Check your requests 📩';
+                commentReplyText = renderReplyTemplate(publicTemplate, {
+                  username: authorUsername,
+                  account_username: account.username,
+                });
+                commentResult = await sendPublicCommentReply(commentId, pageToken, commentReplyText);
+              }
+
+              let overallStatus: 'delivered' | 'failed' = 'delivered';
+              if (shouldSendDm && shouldSendComment) {
+                overallStatus = (dmResult?.success || commentResult?.success) ? 'delivered' : 'failed';
+              } else if (shouldSendDm) {
+                overallStatus = dmResult?.success ? 'delivered' : 'failed';
+              } else if (shouldSendComment) {
+                overallStatus = commentResult?.success ? 'delivered' : 'failed';
+              }
+
+              const primaryError = dmResult?.error || commentResult?.error;
+
+              await supabase.from('comment_dispatches').update({
+                account_id: account.id,
+                user_id: account.user_id,
+                rule_id: matchedRule.id,
+                rule_name: matchedRule.name,
+                trigger_type: matchedRule.trigger_type || 'keywords',
+                action_type: actionType,
+                keyword_matched: matchedKeyword,
+                reply_text: shouldSendDm ? dmText : null,
+                comment_reply_text: shouldSendComment ? commentReplyText : null,
+                status: overallStatus,
+                private_reply_status: shouldSendDm ? (dmResult?.success ? 'delivered' : 'failed') : 'skipped',
+                public_reply_status: shouldSendComment ? (commentResult?.success ? 'delivered' : 'failed') : 'skipped',
+                follow_gate_status: followGateStatus,
+                meta_message_id: dmResult?.message_id,
+                meta_recipient_id: dmResult?.recipient_id,
+                meta_comment_id: commentResult?.id,
+                error_code: primaryError?.code || (overallStatus === 'failed' ? 400 : null),
+                error_message: primaryError?.message || null,
+                fb_trace_id: dmResult?.fb_trace_id || commentResult?.fb_trace_id,
+                updated_at: new Date().toISOString(),
+              }).eq('comment_id', commentId);
+
+              if (overallStatus === 'delivered') {
                 try {
                   await supabase.rpc('increment_rule_triggers', { rule_id: matchedRule.id });
                 } catch {}
-              } else {
-                await supabase.from('comment_dispatches').update({
-                  account_id: account.id,
-                  user_id: account.user_id,
-                  keyword_matched: matchedKeyword,
-                  reply_text: replyText,
-                  status: 'failed',
-                  error_code: result.error?.code || result.status || 0,
-                  error_message: result.error?.message || 'Meta rejected reply',
-                  fb_trace_id: result.fb_trace_id,
-                  updated_at: new Date().toISOString(),
-                }).eq('comment_id', commentId);
               }
             } else {
               // No rule matched
@@ -247,6 +293,51 @@ export async function POST(req: NextRequest) {
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
           });
+        }
+      }
+    }
+
+    // 4. Handle Messaging Webhooks (Direct Message reply for Follow Gate confirmation)
+    const messagingEvents = entry.messaging || [];
+    for (const msgEvent of messagingEvents) {
+      const senderId = msgEvent.sender?.id;
+      const messageText = msgEvent.message?.text || msgEvent.postback?.payload || '';
+
+      if (senderId && messageText && supabase) {
+        const { data: pendingDispatch } = await supabase
+          .from('comment_dispatches')
+          .select('*, automation_rules(*)')
+          .eq('author_id', senderId)
+          .in('follow_gate_status', ['does_not_follow', 'unknown'])
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (pendingDispatch && pendingDispatch.automation_rules) {
+          const rule = pendingDispatch.automation_rules;
+          const { data: acc } = await supabase
+            .from('connected_accounts')
+            .select('*')
+            .eq('id', pendingDispatch.account_id)
+            .maybeSingle();
+
+          if (acc) {
+            const token = decryptToken(acc.encrypted_access_token);
+            const followStatus = await checkUserFollowsBusiness(senderId, token);
+            const unlockedText = renderReplyTemplate(
+              rule.follow_unlocked_template || rule.reply_template,
+              { username: pendingDispatch.author_username, account_username: acc.username }
+            );
+
+            const dmRes = await sendDirectMessage(acc.instagram_user_id, token, senderId, unlockedText);
+            if (dmRes.success) {
+              await supabase.from('comment_dispatches').update({
+                follow_gate_status: followStatus === 'FOLLOWS' ? 'follows' : 'unknown',
+                reply_text: unlockedText,
+                updated_at: new Date().toISOString(),
+              }).eq('comment_id', pendingDispatch.comment_id);
+            }
+          }
         }
       }
     }

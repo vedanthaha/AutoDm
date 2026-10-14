@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, Send, CheckCircle2, AlertCircle, Sparkles } from 'lucide-react';
-import { ConnectedAccount } from '@/lib/types';
+import { X, Sparkles, Send, CheckCircle2, AlertCircle } from 'lucide-react';
+import { ConnectedAccount, AutomationRule, CommentDispatch } from '@/lib/types';
 
 interface Props {
   isOpen: boolean;
@@ -12,12 +12,26 @@ interface Props {
   onSuccess?: () => void;
 }
 
-export function SimulationModal({ isOpen, onClose, accounts, activeAccountId, onSuccess }: Props) {
-  const [commentText, setCommentText] = useState('Send me the link please!');
-  const [username, setUsername] = useState('dev_tester');
-  const [accountId, setAccountId] = useState(activeAccountId || accounts[0]?.id);
+interface SimulationResult {
+  matched?: boolean;
+  matchedRule?: AutomationRule;
+  matchedKeyword?: string;
+  dispatch?: CommentDispatch;
+  error?: string;
+}
+
+export function SimulationModal({
+  isOpen,
+  onClose,
+  accounts,
+  activeAccountId,
+  onSuccess,
+}: Props) {
+  const [accountId, setAccountId] = useState(activeAccountId || accounts[0]?.id || '');
+  const [username, setUsername] = useState('demo_follower');
+  const [commentText, setCommentText] = useState('link');
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<SimulationResult | null>(null);
 
   if (!isOpen) return null;
 
@@ -32,11 +46,10 @@ export function SimulationModal({ isOpen, onClose, accounts, activeAccountId, on
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           account_id: accountId,
+          username,
           comment_text: commentText,
-          author_username: username,
         }),
       });
-
       const data = await res.json();
       setResult(data);
       if (onSuccess) onSuccess();
@@ -48,66 +61,69 @@ export function SimulationModal({ isOpen, onClose, accounts, activeAccountId, on
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-150">
-      <div className="relative w-full max-w-lg rounded-xl bg-zinc-900 border border-zinc-800 shadow-2xl p-6 text-zinc-100">
-        <div className="flex items-center justify-between pb-4 border-b border-zinc-800">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-150">
+      <div className="relative w-full max-w-lg rounded-2xl bg-surface border border-border shadow-popover p-6 text-charcoal">
+        <div className="flex items-center justify-between pb-4 border-b border-border">
           <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-amber-400" />
-            <h3 className="text-sm font-semibold tracking-tight text-white">Interactive Comment Simulator</h3>
+            <Sparkles className="w-4 h-4 text-amber-500" />
+            <h3 className="text-sm font-semibold tracking-tight text-charcoal">Test Inbound Comment Simulator</h3>
           </div>
-          <button onClick={onClose} className="p-1 rounded text-zinc-400 hover:text-white hover:bg-zinc-800">
+          <button
+            onClick={onClose}
+            className="p-1 rounded-lg text-charcoal-muted hover:text-charcoal hover:bg-surface-hover transition-colors"
+          >
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        <p className="mt-3 text-xs text-zinc-400 leading-relaxed">
-          Test your keyword matching and private reply templates without having to post a real comment on Instagram.
+        <p className="mt-3 text-xs text-charcoal-muted leading-relaxed">
+          Safely test keyword matching and message templates without needing to post a live comment on Instagram.
         </p>
 
         <form onSubmit={handleSimulate} className="mt-4 space-y-4">
           <div>
-            <label className="block text-xs font-medium text-zinc-300 mb-1">Target Account</label>
+            <label className="block text-xs font-medium text-charcoal-muted mb-1">Target Account</label>
             <select
               value={accountId}
               onChange={e => setAccountId(e.target.value)}
-              className="w-full px-3 py-2 text-xs rounded-lg bg-zinc-950 border border-zinc-800 text-zinc-200 focus:outline-none focus:border-zinc-600"
+              className="w-full px-3 py-2 text-xs rounded-lg bg-surface-subdued border border-border text-charcoal focus:outline-none focus-ring shadow-subtle font-medium cursor-pointer"
             >
               {accounts.map(a => (
-                <option key={a.id} value={a.id}>@{a.username} ({a.name})</option>
+                <option key={a.id} value={a.id} className="bg-surface text-charcoal">@{a.username} ({a.name})</option>
               ))}
             </select>
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-zinc-300 mb-1">Commenter Username</label>
+            <label className="block text-xs font-medium text-charcoal-muted mb-1">Commenter Username</label>
             <input
               type="text"
               value={username}
               onChange={e => setUsername(e.target.value)}
               placeholder="e.g. johan_codes"
               required
-              className="w-full px-3 py-2 text-xs rounded-lg bg-zinc-950 border border-zinc-800 text-zinc-200 focus:outline-none focus:border-zinc-600"
+              className="w-full px-3 py-2 text-xs rounded-lg bg-surface-subdued border border-border text-charcoal placeholder:text-charcoal-light focus:outline-none focus-ring shadow-subtle"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-zinc-300 mb-1">Simulated Comment Text</label>
+            <label className="block text-xs font-medium text-charcoal-muted mb-1">Simulated Comment Text</label>
             <textarea
               rows={2}
               value={commentText}
               onChange={e => setCommentText(e.target.value)}
               placeholder="e.g. Can you send the link to the guide?"
               required
-              className="w-full px-3 py-2 text-xs rounded-lg bg-zinc-950 border border-zinc-800 text-zinc-200 focus:outline-none focus:border-zinc-600 resize-none font-mono"
+              className="w-full px-3 py-2 text-xs rounded-lg bg-surface-subdued border border-border text-charcoal placeholder:text-charcoal-light focus:outline-none focus-ring resize-none font-mono shadow-subtle"
             />
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2 px-4 rounded-lg bg-zinc-100 hover:bg-white text-zinc-950 text-xs font-semibold flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+            className="w-full py-2.5 px-4 rounded-lg bg-charcoal text-canvas dark:bg-[#ECECEC] dark:text-[#0A0A0B] hover:opacity-90 text-xs font-medium flex items-center justify-center gap-2 transition-colors disabled:opacity-50 shadow-subtle"
           >
-            {loading ? <span className="animate-pulse">Processing Event...</span> : (
+            {loading ? <span className="animate-pulse">Processing Simulation...</span> : (
               <>
                 <Send className="w-3.5 h-3.5" />
                 <span>Simulate Inbound Comment</span>
@@ -118,15 +134,15 @@ export function SimulationModal({ isOpen, onClose, accounts, activeAccountId, on
 
         {/* Result Preview */}
         {result && (
-          <div className="mt-5 p-3.5 rounded-lg bg-zinc-950 border border-zinc-800 text-xs space-y-2">
+          <div className="mt-5 p-4 rounded-xl bg-surface-subdued border border-border text-xs space-y-2.5">
             <div className="flex items-center justify-between">
-              <span className="font-semibold text-zinc-300">Simulation Result:</span>
+              <span className="font-semibold text-charcoal">Simulation Result:</span>
               {result.matched ? (
-                <span className="inline-flex items-center gap-1 text-emerald-400 font-medium">
+                <span className="inline-flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-medium">
                   <CheckCircle2 className="w-3.5 h-3.5" /> Keyword Matched
                 </span>
               ) : (
-                <span className="inline-flex items-center gap-1 text-zinc-400 font-medium">
+                <span className="inline-flex items-center gap-1.5 text-charcoal-muted font-medium">
                   <AlertCircle className="w-3.5 h-3.5" /> No Keyword Matched
                 </span>
               )}
@@ -134,19 +150,19 @@ export function SimulationModal({ isOpen, onClose, accounts, activeAccountId, on
 
             {result.matched ? (
               <>
-                <div className="text-[11px] text-zinc-400">
-                  Matched Rule: <span className="text-zinc-200 font-medium">{result.matchedRule?.name}</span> (Trigger: <code className="text-emerald-300">"{result.matchedKeyword}"</code>)
+                <div className="text-[11px] text-charcoal-muted">
+                  Matched Rule: <span className="text-charcoal font-medium">{result.matchedRule?.name}</span> (Trigger: <code className="text-accent font-mono">"{result.matchedKeyword}"</code>)
                 </div>
-                <div className="p-2.5 rounded bg-zinc-900 border border-zinc-800 font-mono text-[11px] text-zinc-300">
-                  <div className="text-[10px] text-zinc-500 mb-1">Generated Private Reply:</div>
+                <div className="p-3 rounded-lg bg-surface border border-border font-mono text-[11px] text-charcoal shadow-subtle">
+                  <div className="text-[10px] text-charcoal-muted mb-1 font-sans">Generated Private Reply DM:</div>
                   "{result.dispatch?.reply_text}"
                 </div>
-                <p className="text-[10px] text-emerald-500 font-mono">
+                <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
                   ✓ Recorded in Activity Log with status: delivered
                 </p>
               </>
             ) : (
-              <p className="text-[11px] text-zinc-400">
+              <p className="text-[11px] text-charcoal-muted">
                 Comment ignored because no active automation rules for this account matched your text.
               </p>
             )}

@@ -16,7 +16,13 @@
  * - Private Reply: POST https://graph.instagram.com/{v}/{user_id}/messages
  */
 
-import type { PrivateReplyResult, InstagramMedia, PublicCommentReplyResult } from './types.ts';
+import type {
+  PrivateReplyResult,
+  InstagramMedia,
+  PublicCommentReplyResult,
+  FollowCheckResult,
+  MediaPaging
+} from './types.ts';
 
 export const META_API_VERSION = process.env.META_GRAPH_API_VERSION || 'v26.0';
 export const META_API_HOST = process.env.META_API_HOST || 'graph.instagram.com';
@@ -220,26 +226,49 @@ export async function unsubscribeAccountWebhooks(
   }
 }
 
+export type PaginatedMediaList = InstagramMedia[] & { paging?: MediaPaging };
+
 /**
- * Step 6: Fetches recent Posts & Reels for the account
+ * Step 6: Fetches Posts & Reels with cursor-based pagination
+ *
+ * Endpoint: GET https://graph.instagram.com/{version}/{user_id}/media
+ * Parameters: limit, after
+ * Fields: id,caption,media_type,media_product_type,media_url,thumbnail_url,permalink,timestamp,comments_count,like_count
  */
 export async function getInstagramMedia(
   userId: string,
   accessToken: string,
-  limit = 20
-): Promise<InstagramMedia[]> {
+  limit = 20,
+  after?: string
+): Promise<PaginatedMediaList> {
   try {
-    const url = `https://${META_API_HOST}/${META_API_VERSION}/${userId}/media?fields=id,caption,media_type,media_url,thumbnail_url,permalink,timestamp&limit=${limit}&access_token=${encodeURIComponent(accessToken)}`;
+    let url = `https://${META_API_HOST}/${META_API_VERSION}/${userId}/media?fields=id,caption,media_type,media_url,thumbnail_url,permalink,timestamp,media_product_type,comments_count,like_count&limit=${limit}&access_token=${encodeURIComponent(accessToken)}`;
+    if (after) {
+      url += `&after=${encodeURIComponent(after)}`;
+    }
+
     const res = await fetch(url, { method: 'GET' });
     const data = await res.json();
 
     if (res.ok && Array.isArray(data.data)) {
-      return data.data as InstagramMedia[];
+      const items = data.data as PaginatedMediaList;
+      items.paging = {
+        cursors: data.paging?.cursors,
+        next: data.paging?.next,
+        has_next: Boolean(data.paging?.next || data.paging?.cursors?.after),
+      };
+      return items;
     }
-    return [];
+
+    console.warn('[Meta] Media query returned non-array:', data);
+    const empty = [] as PaginatedMediaList;
+    empty.paging = { has_next: false };
+    return empty;
   } catch (err) {
     console.error('[Meta] Failed to fetch media:', (err as Error).message);
-    return [];
+    const empty = [] as PaginatedMediaList;
+    empty.paging = { has_next: false };
+    return empty;
   }
 }
 
@@ -390,3 +419,108 @@ export async function sendPublicCommentReply(
     fb_trace_id: lastTraceId,
   };
 }
+
+/**
+ * Step 9: Sends a Direct Message to a user within an established conversation
+ *
+ * Distinct from Private Reply: Uses recipient.id (IGSID) instead of recipient.comment_id.
+ * Endpoint: POST https://graph.instagram.com/{version}/{user_id}/messages
+ * Payload: { recipient: { id: "<IGSID>" }, message: { text: "..." } }
+ */
+export async function sendDirectMessage(
+  instagramUserId: string,
+  accessToken: string,
+  recipientIgSid: string,
+  messageText: string
+): Promise<PrivateReplyResult> {
+  const endpoint = `https://${META_API_HOST}/${META_API_VERSION}/${instagramUserId}/messages`;
+  const payload = {
+    recipient: {
+      id: recipientIgSid,
+    },
+    message: {
+      text: messageText,
+    },
+  };
+
+  try {
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json();
+    const fbTraceId = res.headers.get('x-fb-trace-id') || data?.error?.fbtrace_id || undefined;
+
+    if (res.ok && data.message_id) {
+      return {
+        success: true,
+        status: res.status,
+        message_id: data.message_id,
+        recipient_id: data.recipient_id || recipientIgSid,
+        fb_trace_id: fbTraceId,
+      };
+    } else {
+      return {
+        success: false,
+        status: res.status,
+        error: data.error || { message: 'Meta rejected direct message' },
+        fb_trace_id: fbTraceId,
+      };
+    }
+  } catch (err) {
+    return {
+      success: false,
+      error: {
+        message: (err as Error).message,
+        type: 'NetworkError',
+      },
+    };
+  }
+}
+
+/**
+ * Step 10: Checks whether an Instagram user follows the business account
+ *
+ * Endpoint: GET https://graph.facebook.com/{version}/{userId}?fields=is_user_follow_business
+ * Required permission: instagram_manage_messages / instagram_business_manage_messages
+ *
+ * Explicit return values:
+ * - 'FOLLOWS': Confirmed follower (is_user_follow_business === true)
+ * - 'DOES_NOT_FOLLOW': Confirmed non-follower (is_user_follow_business === false)
+ * - 'UNKNOWN': Network failure, missing permission, unsupported ID, or API rejection.
+ */
+export async function checkUserFollowsBusiness(
+  userId: string,
+  accessToken: string
+): Promise<FollowCheckResult> {
+  if (!userId || !accessToken) return 'UNKNOWN';
+
+  const hosts = ['graph.facebook.com', META_API_HOST];
+
+  for (const host of hosts) {
+    try {
+      const url = `https://${host}/${META_API_VERSION}/${userId}?fields=is_user_follow_business&access_token=${encodeURIComponent(accessToken)}`;
+      const res = await fetch(url, { method: 'GET' });
+      const data = await res.json();
+
+      if (res.ok && typeof data.is_user_follow_business === 'boolean') {
+        return data.is_user_follow_business ? 'FOLLOWS' : 'DOES_NOT_FOLLOW';
+      }
+
+      if (data?.error) {
+        console.warn(`[Meta] Follower check notice for user ${userId}:`, data.error.message);
+      }
+    } catch (err) {
+      console.warn(`[Meta] Follower check network exception:`, (err as Error).message);
+    }
+  }
+
+  // Never assume DOES_NOT_FOLLOW on API or network failures
+  return 'UNKNOWN';
+}
+

@@ -1,3 +1,5 @@
+'use client';
+
 import Link from 'next/link';
 import {
   Zap,
@@ -7,348 +9,445 @@ import {
   ArrowRight,
   CheckCircle2,
   Clock,
-  Lock,
-  BarChart3,
+  Layers,
   Sparkles,
+  UserCheck,
+  ListTree,
+  ExternalLink,
+  ChevronRight
 } from 'lucide-react';
-
-export const metadata = {
-  title: 'AutoDm — Automate Instagram Comment-to-DM Replies',
-  description:
-    'AutoDm turns Instagram comments into instant DM conversations. Connect your Professional account, set keyword triggers, and let AutoDm handle the rest. Built on the official Instagram API.',
-};
+import { motion } from 'framer-motion';
+import { ThemeProvider, ThemeToggle } from '@/components/ThemeProvider';
+import {
+  MotionPage,
+  MotionStagger,
+  MotionItem,
+  MotionCard,
+  MotionButton,
+  fadeInUp,
+  fadeIn,
+  scaleIn,
+  staggerContainer,
+  staggerItem,
+} from '@/components/Motion';
 
 function NavBar() {
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-zinc-950/80 backdrop-blur-xl border-b border-zinc-800/60">
-      <div className="max-w-6xl mx-auto flex items-center justify-between px-6 h-16">
+    <motion.nav
+      initial={{ y: -20, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
+      className="fixed top-0 left-0 right-0 z-50 glass border-b border-border"
+    >
+      <div className="max-w-6xl mx-auto flex items-center justify-between px-6 h-14">
         <Link href="/" className="flex items-center gap-2.5 group">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-fuchsia-500 to-violet-600 flex items-center justify-center text-white font-black text-xs tracking-tighter shadow-lg shadow-violet-500/20 group-hover:shadow-violet-500/40 transition-shadow">
+          <div className="w-7 h-7 rounded-md bg-charcoal flex items-center justify-center text-canvas font-semibold text-xs tracking-tight shadow-xs">
             AD
           </div>
-          <span className="font-bold text-base tracking-tight text-white">AutoDm</span>
+          <span className="font-semibold text-sm tracking-tight text-charcoal">AutoDm</span>
         </Link>
-        <div className="hidden sm:flex items-center gap-6 text-sm text-zinc-400">
-          <a href="#features" className="hover:text-white transition-colors">Features</a>
-          <a href="#how-it-works" className="hover:text-white transition-colors">How It Works</a>
-          <a href="#security" className="hover:text-white transition-colors">Security</a>
+        
+        <div className="hidden md:flex items-center gap-6 text-xs font-medium text-charcoal-muted">
+          <a href="#features" className="hover:text-charcoal transition-colors">Features</a>
+          <a href="#follow-gate" className="hover:text-charcoal transition-colors">Follow Gate</a>
+          <a href="#architecture" className="hover:text-charcoal transition-colors">Architecture</a>
+          <a href="#faq" className="hover:text-charcoal transition-colors">FAQ</a>
         </div>
+
         <div className="flex items-center gap-3">
+          <ThemeToggle />
           <Link
             href="/login"
-            className="text-sm text-zinc-300 hover:text-white transition-colors font-medium"
+            className="text-xs text-charcoal-muted hover:text-charcoal transition-colors font-medium px-2 py-1.5"
           >
             Sign In
           </Link>
           <Link
-            href="/signup"
-            className="px-4 py-2 rounded-lg bg-gradient-to-r from-fuchsia-600 to-violet-600 hover:from-fuchsia-500 hover:to-violet-500 text-white text-sm font-semibold transition-all shadow-lg shadow-violet-600/25 hover:shadow-violet-500/40"
+            href="/dashboard"
+            className="px-3.5 py-1.5 rounded-lg bg-charcoal hover:bg-charcoal/90 text-canvas text-xs font-medium transition-colors shadow-xs"
           >
-            Get Started Free
+            Open Dashboard
           </Link>
         </div>
       </div>
-    </nav>
+    </motion.nav>
   );
 }
 
 function HeroSection() {
   return (
-    <section className="relative pt-32 pb-20 px-6 overflow-hidden">
-      {/* Gradient orbs */}
-      <div className="absolute top-20 left-1/4 w-96 h-96 bg-fuchsia-600/15 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute top-40 right-1/4 w-80 h-80 bg-violet-600/10 rounded-full blur-3xl pointer-events-none" />
+    <section className="pt-28 pb-16 md:pt-36 md:pb-24 px-6 max-w-5xl mx-auto text-center space-y-6">
+      {/* Pill Badge */}
+      <motion.div
+        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.5, delay: 0.2 }}
+        className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-surface border border-border text-[11px] font-mono text-charcoal-muted shadow-xs"
+      >
+        <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A] pulse-dot" />
+        <span>Official Meta Graph API • Instagram Login for Business</span>
+      </motion.div>
 
-      <div className="relative max-w-4xl mx-auto text-center space-y-8">
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-zinc-900 border border-zinc-800 text-xs text-zinc-300 font-medium">
-          <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-          <span>Built on the Official Instagram Graph API</span>
-        </div>
+      {/* Main Headline */}
+      <motion.h1
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
+        className="text-4xl sm:text-5xl md:text-6xl font-semibold tracking-[-0.03em] text-charcoal leading-[1.08] max-w-3xl mx-auto"
+      >
+        Turn Instagram comments into{' '}
+        <span className="gradient-text">instant conversations.</span>
+      </motion.h1>
 
-        <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-white leading-[1.1]">
-          Turn Instagram comments into{' '}
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-400 via-violet-400 to-indigo-400">
-            instant DM conversations
+      {/* Subheading */}
+      <motion.p
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.45 }}
+        className="text-base sm:text-lg text-charcoal-muted max-w-2xl mx-auto leading-relaxed font-normal"
+      >
+        Automate comment replies, private DMs, and Follow Gates across your posts and Reels. Built on official Meta APIs with atomic deduplication and real-time delivery logs.
+      </motion.p>
+
+      {/* Action Buttons */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.55 }}
+        className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-3"
+      >
+        <MotionButton
+          className="w-full sm:w-auto px-5 py-2.5 rounded-lg bg-charcoal hover:bg-charcoal/90 text-canvas text-xs font-semibold flex items-center justify-center gap-2 transition-all shadow-xs glow-accent"
+          onClick={() => window.location.href = '/accounts'}
+        >
+          <span>Connect Instagram Account</span>
+          <ArrowRight className="w-3.5 h-3.5" />
+        </MotionButton>
+        <MotionButton
+          className="w-full sm:w-auto px-5 py-2.5 rounded-lg bg-surface hover:bg-surface-hover border border-border text-charcoal text-xs font-semibold flex items-center justify-center gap-2 transition-colors shadow-xs"
+          onClick={() => window.location.href = '/dashboard'}
+        >
+          <Instagram className="w-3.5 h-3.5 text-charcoal-muted" />
+          <span>Explore Live Studio</span>
+        </MotionButton>
+      </motion.div>
+
+      {/* Trust Details */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5, delay: 0.7 }}
+        className="flex flex-wrap items-center justify-center gap-6 pt-4 text-[11px] text-charcoal-muted"
+      >
+        <span className="flex items-center gap-1.5">
+          <CheckCircle2 className="w-3.5 h-3.5 text-[#16A34A]" /> No Facebook Page required
+        </span>
+        <span className="flex items-center gap-1.5">
+          <CheckCircle2 className="w-3.5 h-3.5 text-[#16A34A]" /> Business &amp; Creator Profiles
+        </span>
+        <span className="flex items-center gap-1.5">
+          <CheckCircle2 className="w-3.5 h-3.5 text-[#16A34A]" /> AES-256 encrypted tokens
+        </span>
+      </motion.div>
+    </section>
+  );
+}
+
+function ProductShowcase() {
+  return (
+    <section className="px-6 pb-20 max-w-5xl mx-auto">
+      <motion.div
+        initial={{ opacity: 0, y: 30, scale: 0.98 }}
+        whileInView={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }}
+        viewport={{ once: true, margin: '-50px' }}
+        className="rounded-2xl border border-border bg-surface shadow-popover overflow-hidden"
+      >
+        {/* Mock Window Top Bar */}
+        <div className="px-4 py-3 border-b border-border bg-surface-subdued flex items-center justify-between text-xs text-charcoal-muted">
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-border" />
+              <span className="w-2.5 h-2.5 rounded-full bg-border" />
+              <span className="w-2.5 h-2.5 rounded-full bg-border" />
+            </div>
+            <span className="text-[11px] font-mono text-charcoal-light ml-2">autodm.app / studio / @automation.normie</span>
+          </div>
+          <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-[--success-bg] text-[--success-text] border border-[--success-border]">
+            Webhooks Subscribed
           </span>
-        </h1>
+        </div>
 
-        <p className="text-lg sm:text-xl text-zinc-400 max-w-2xl mx-auto leading-relaxed">
-          Set keyword triggers on your posts and Reels. When someone comments, AutoDm sends them a
-          personalized DM automatically — all through Instagram&apos;s official API.
-        </p>
-
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-          <Link
-            href="/signup"
-            className="group px-6 py-3 rounded-xl bg-gradient-to-r from-fuchsia-600 to-violet-600 hover:from-fuchsia-500 hover:to-violet-500 text-white font-semibold text-base flex items-center gap-2.5 transition-all shadow-xl shadow-violet-600/20 hover:shadow-violet-500/40"
+        {/* Studio Inner Interface Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-border p-0 text-left">
+          {/* Column 1: Targeted Media Item */}
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            viewport={{ once: true }}
+            className="p-6 space-y-4 bg-surface-subdued"
           >
-            Start Automating
-            <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-          </Link>
-          <Link
-            href="/login"
-            className="px-6 py-3 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-200 font-semibold text-base flex items-center gap-2 transition-colors"
-          >
-            <Instagram className="w-4 h-4" />
-            Sign In
-          </Link>
-        </div>
-
-        <div className="flex items-center justify-center gap-6 pt-6 text-xs text-zinc-500">
-          <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /> No credit card required</span>
-          <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /> Works with Business &amp; Creator</span>
-          <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /> Official Meta API</span>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-const features = [
-  {
-    icon: Zap,
-    title: 'Keyword Triggers',
-    description: 'Define keywords per post or across all content. AutoDm detects matching comments and fires instantly.',
-    color: 'text-amber-400',
-    bg: 'bg-amber-500/10',
-  },
-  {
-    icon: MessageSquare,
-    title: 'Personalized DMs',
-    description: 'Send templated messages with dynamic variables like {{username}}. Every reply feels personal and relevant.',
-    color: 'text-fuchsia-400',
-    bg: 'bg-fuchsia-500/10',
-  },
-  {
-    icon: Shield,
-    title: 'Official API Integration',
-    description: 'Built on Instagram Login for Business. No scraping, no workarounds — fully compliant with Meta policies.',
-    color: 'text-violet-400',
-    bg: 'bg-violet-500/10',
-  },
-  {
-    icon: Lock,
-    title: 'Encrypted Token Vault',
-    description: 'Access tokens are encrypted at rest with AES-256-GCM. We never store plaintext credentials.',
-    color: 'text-emerald-400',
-    bg: 'bg-emerald-500/10',
-  },
-  {
-    icon: BarChart3,
-    title: 'Real-Time Activity Feed',
-    description: 'See every comment match, DM delivery, and error in a live audit log. Full transparency over automation.',
-    color: 'text-sky-400',
-    bg: 'bg-sky-500/10',
-  },
-  {
-    icon: Clock,
-    title: 'Idempotent Processing',
-    description: 'Database-level deduplication ensures every comment is processed exactly once, even under retry conditions.',
-    color: 'text-orange-400',
-    bg: 'bg-orange-500/10',
-  },
-];
-
-function FeaturesSection() {
-  return (
-    <section id="features" className="py-24 px-6">
-      <div className="max-w-6xl mx-auto">
-        <div className="text-center space-y-4 mb-16">
-          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-white">
-            Everything you need to automate engagement
-          </h2>
-          <p className="text-zinc-400 text-lg max-w-2xl mx-auto">
-            From trigger configuration to delivery tracking — AutoDm handles the entire pipeline.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {features.map((f) => {
-            const Icon = f.icon;
-            return (
-              <div
-                key={f.title}
-                className="p-6 rounded-2xl bg-zinc-900/50 border border-zinc-800/80 hover:border-zinc-700/80 transition-colors group"
-              >
-                <div className={`w-10 h-10 rounded-xl ${f.bg} flex items-center justify-center mb-4`}>
-                  <Icon className={`w-5 h-5 ${f.color}`} />
+            <div className="text-[10px] font-mono uppercase tracking-wider text-charcoal-light font-semibold">
+              1. Selected Reel / Post
+            </div>
+            <div className="rounded-xl border border-border bg-surface p-3 space-y-3 shadow-2xs">
+              <div className="aspect-square rounded-lg bg-surface-subdued overflow-hidden relative flex items-center justify-center text-charcoal-muted">
+                <div className="text-center p-4">
+                  <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-surface border border-border text-charcoal font-medium shadow-2xs">
+                    REELS VIDEO
+                  </span>
+                  <p className="text-xs text-charcoal font-medium mt-3">
+                    &ldquo;Comment LINK to unlock our complete automation playbook 🚀&rdquo;
+                  </p>
                 </div>
-                <h3 className="text-base font-semibold text-white mb-2">{f.title}</h3>
-                <p className="text-sm text-zinc-400 leading-relaxed">{f.description}</p>
               </div>
-            );
-          })}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-const steps = [
-  {
-    step: '01',
-    title: 'Connect Instagram',
-    description: 'Click "Connect Instagram" and authorize through Instagram\'s official OAuth flow. We request only the permissions we need.',
-  },
-  {
-    step: '02',
-    title: 'Create Automations',
-    description: 'Select a post or Reel, define trigger keywords, and write a DM template. Use variables like {{username}} for personalization.',
-  },
-  {
-    step: '03',
-    title: 'Activate & Monitor',
-    description: 'Toggle your automation on. AutoDm listens for matching comments via webhooks and sends DMs automatically. Track results live.',
-  },
-];
-
-function HowItWorksSection() {
-  return (
-    <section id="how-it-works" className="py-24 px-6 bg-zinc-900/30">
-      <div className="max-w-4xl mx-auto">
-        <div className="text-center space-y-4 mb-16">
-          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-white">
-            Up and running in three steps
-          </h2>
-          <p className="text-zinc-400 text-lg">
-            No complex setup. Connect, configure, and go.
-          </p>
-        </div>
-
-        <div className="space-y-8">
-          {steps.map((s) => (
-            <div
-              key={s.step}
-              className="flex items-start gap-6 p-6 rounded-2xl bg-zinc-950 border border-zinc-800/60"
-            >
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-fuchsia-600/20 to-violet-600/20 border border-violet-500/20 flex items-center justify-center text-violet-400 font-bold text-sm font-mono shrink-0">
-                {s.step}
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-white mb-1">{s.title}</h3>
-                <p className="text-sm text-zinc-400 leading-relaxed">{s.description}</p>
+              <div className="flex items-center justify-between text-[11px] font-mono text-charcoal-muted">
+                <span>Status: <strong className="text-[--success-text]">Active</strong></span>
+                <span>Oct 14, 2026</span>
               </div>
             </div>
-          ))}
+          </motion.div>
+
+          {/* Column 2: Inbound Event & Matching Rule */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.25 }}
+            viewport={{ once: true }}
+            className="p-6 space-y-4"
+          >
+            <div className="text-[10px] font-mono uppercase tracking-wider text-charcoal-light font-semibold">
+              2. Inbound Comment &amp; Trigger
+            </div>
+            <div className="space-y-3 text-xs">
+              <div className="p-3 rounded-xl border border-border bg-canvas space-y-1.5">
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="font-semibold text-charcoal">@alex_creator</span>
+                  <span className="text-charcoal-light font-mono">Top-level comment</span>
+                </div>
+                <p className="text-charcoal font-medium bg-surface p-2 rounded-lg border border-border">
+                  &ldquo;Please send me the link! Love this breakdown.&rdquo;
+                </p>
+              </div>
+
+              <motion.div
+                initial={{ scale: 0.95, opacity: 0 }}
+                whileInView={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.3, delay: 0.4 }}
+                viewport={{ once: true }}
+                className="p-3 rounded-xl border border-[--success-border] bg-[--success-bg] space-y-1"
+              >
+                <div className="flex items-center gap-1.5 text-[--success-text] font-semibold text-[11px]">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span>Mode B: Keyword Matched</span>
+                </div>
+                <p className="text-[11px] text-[--success-text] font-mono">
+                  Matched &ldquo;link&rdquo; (whole word boundary)
+                </p>
+              </motion.div>
+
+              <div className="p-2.5 rounded-lg border border-border bg-surface text-[11px] text-charcoal-muted flex items-center justify-between">
+                <span>Follower Check:</span>
+                <span className="font-semibold text-charcoal font-mono">FOLLOWS (Verified)</span>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Column 3: Instant Verified Delivery */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.35 }}
+            viewport={{ once: true }}
+            className="p-6 space-y-4 bg-surface"
+          >
+            <div className="text-[10px] font-mono uppercase tracking-wider text-charcoal-light font-semibold">
+              3. Meta API Dispatches
+            </div>
+            <div className="space-y-3 text-xs">
+              {/* Private DM Bubble */}
+              <div className="p-3.5 rounded-xl border border-border bg-canvas space-y-2">
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="font-semibold text-charcoal flex items-center gap-1">
+                    <MessageSquare className="w-3 h-3 text-accent" />
+                    Private Reply DM
+                  </span>
+                  <span className="text-[--success-text] font-mono text-[10px] font-medium">Delivered</span>
+                </div>
+                <div className="p-2.5 rounded-lg bg-surface border border-border text-charcoal leading-relaxed">
+                  Hey @alex_creator! Here is the link you requested: <span className="text-accent underline font-medium">https://autodm.app/starter</span>
+                </div>
+                <div className="text-[10px] font-mono text-charcoal-light">
+                  mid: 17841435016232737_992
+                </div>
+              </div>
+
+              {/* Public Comment Reply */}
+              <div className="p-3 rounded-xl border border-border bg-surface space-y-1">
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="font-medium text-charcoal-muted">Public Reply to Comment:</span>
+                  <span className="text-[--success-text] font-mono text-[10px]">Published</span>
+                </div>
+                <p className="text-[11px] text-charcoal italic">
+                  &ldquo;Sent to your DM! Check your requests 📩&rdquo;
+                </p>
+              </div>
+            </div>
+          </motion.div>
         </div>
-      </div>
+      </motion.div>
     </section>
   );
 }
 
-function SecuritySection() {
+function FeaturesSection() {
+  const items = [
+    {
+      title: 'Flexible Trigger Engine',
+      description: 'Choose Mode A to trigger on every top-level comment with exclusion filters, or Mode B for multi-keyword matching with whole-word unicode precision.',
+      badge: 'Mode A & Mode B',
+      icon: Zap,
+    },
+    {
+      title: 'Follow Gate with Fallback',
+      description: 'Optionally prompt commenters to follow your profile before unlocking high-value links. Uses genuine Meta follower checking with self-confirmation fallback.',
+      badge: 'Follow to Unlock',
+      icon: UserCheck,
+    },
+    {
+      title: 'Complete Media Gallery',
+      description: 'Cursor-based pagination across your entire catalog of published Posts, Reels, and Carousels. Never truncated at arbitrary limits.',
+      badge: 'Full Catalog',
+      icon: Layers,
+    },
+    {
+      title: 'Traceable Audit Trail',
+      description: 'Every webhook event is tracked from ingestion to delivery. Includes Meta message IDs, execution statuses, and sanitized error diagnostics.',
+      badge: 'Zero Silent Failures',
+      icon: ListTree,
+    },
+  ];
+
   return (
-    <section id="security" className="py-24 px-6">
-      <div className="max-w-4xl mx-auto text-center space-y-8">
-        <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-white">
-          Built with security in mind
+    <section id="features" className="py-20 px-6 max-w-5xl mx-auto border-t border-border">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        viewport={{ once: true }}
+        className="text-center max-w-2xl mx-auto space-y-3 mb-14"
+      >
+        <h2 className="text-2xl sm:text-3xl font-semibold tracking-[-0.025em] text-charcoal">
+          Engineered for restraint and reliability.
         </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-left">
-          <div className="p-5 rounded-xl bg-zinc-900/50 border border-zinc-800/80">
-            <Lock className="w-5 h-5 text-emerald-400 mb-3" />
-            <h3 className="text-sm font-semibold text-white mb-1">AES-256-GCM Encryption</h3>
-            <p className="text-xs text-zinc-400 leading-relaxed">
-              All Instagram access tokens are encrypted at rest. Plaintext tokens never touch the database.
-            </p>
-          </div>
-          <div className="p-5 rounded-xl bg-zinc-900/50 border border-zinc-800/80">
-            <Shield className="w-5 h-5 text-violet-400 mb-3" />
-            <h3 className="text-sm font-semibold text-white mb-1">HMAC Signature Verification</h3>
-            <p className="text-xs text-zinc-400 leading-relaxed">
-              Every webhook payload is validated with timing-safe HMAC-SHA256 comparison before processing.
-            </p>
-          </div>
-          <div className="p-5 rounded-xl bg-zinc-900/50 border border-zinc-800/80">
-            <CheckCircle2 className="w-5 h-5 text-sky-400 mb-3" />
-            <h3 className="text-sm font-semibold text-white mb-1">Row-Level Security</h3>
-            <p className="text-xs text-zinc-400 leading-relaxed">
-              Multi-tenant data isolation via Supabase RLS. Each user can only access their own accounts and data.
-            </p>
-          </div>
-        </div>
-      </div>
+        <p className="text-sm text-charcoal-muted leading-relaxed">
+          No simulations or fragile scraping. AutoDm strictly adheres to Meta Graph API compliance guidelines.
+        </p>
+      </motion.div>
+
+      <MotionStagger className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {items.map((item, idx) => {
+          const Icon = item.icon;
+          return (
+            <MotionCard
+              key={idx}
+              className="p-6 rounded-2xl border border-border bg-surface space-y-3 shadow-2xs hover:border-border-strong hover:shadow-card transition-all group cursor-default"
+            >
+              <div className="flex items-center justify-between">
+                <span className="px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-surface-subdued border border-border text-charcoal-muted">
+                  {item.badge}
+                </span>
+                <div className="w-8 h-8 rounded-lg bg-accent-muted flex items-center justify-center group-hover:bg-accent/10 transition-colors">
+                  <Icon className="w-4 h-4 text-accent" />
+                </div>
+              </div>
+              <h3 className="text-base font-semibold text-charcoal tracking-tight">{item.title}</h3>
+              <p className="text-xs text-charcoal-muted leading-relaxed font-normal">{item.description}</p>
+            </MotionCard>
+          );
+        })}
+      </MotionStagger>
     </section>
   );
 }
 
-function CTASection() {
-  return (
-    <section className="py-24 px-6">
-      <div className="max-w-3xl mx-auto text-center">
-        <div className="p-12 rounded-3xl bg-gradient-to-br from-zinc-900 to-zinc-950 border border-zinc-800/80 relative overflow-hidden">
-          <div className="absolute -top-20 -right-20 w-60 h-60 bg-fuchsia-600/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute -bottom-20 -left-20 w-60 h-60 bg-violet-600/10 rounded-full blur-3xl pointer-events-none" />
+function FAQSection() {
+  const faqs = [
+    {
+      q: 'Does AutoDm require a Facebook Page to connect?',
+      a: 'No. AutoDm uses official Instagram Login for Business. You connect directly with your Instagram Business or Creator account without managing Facebook Pages or manually creating developer apps.',
+    },
+    {
+      q: 'How does Meta enforce the one-private-reply rule?',
+      a: 'Meta Graph API strictly permits exactly one private reply per top-level comment ID within 7 days. AutoDm automatically deduplicates every event at the database level to ensure duplicate attempts are never sent.',
+    },
+    {
+      q: 'How does the Follow Gate verify followers?',
+      a: 'When an eligible Instagram-scoped user ID is available, AutoDm checks follower status via the official Graph API. If permissions are restricted or the status is UNKNOWN, AutoDm provides a polite self-confirmation fallback.',
+    },
+    {
+      q: 'Can I send both a private DM and a public comment reply?',
+      a: 'Yes. AutoDm supports DM only, comment reply only, or both operations simultaneously. You can customize templates with dynamic variables like {{username}} and {{account_username}}.',
+    },
+  ];
 
-          <div className="relative space-y-6">
-            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
-              Ready to automate your Instagram engagement?
-            </h2>
-            <p className="text-zinc-400 max-w-xl mx-auto">
-              Connect your Professional Instagram account and create your first automation in minutes.
-            </p>
-            <Link
-              href="/signup"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-fuchsia-600 to-violet-600 hover:from-fuchsia-500 hover:to-violet-500 text-white font-semibold transition-all shadow-xl shadow-violet-600/20 hover:shadow-violet-500/40"
-            >
-              Create Free Account
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
-        </div>
-      </div>
+  return (
+    <section id="faq" className="py-20 px-6 max-w-4xl mx-auto border-t border-border">
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        viewport={{ once: true }}
+        className="text-center space-y-2 mb-12"
+      >
+        <h2 className="text-2xl font-semibold tracking-[-0.02em] text-charcoal">Frequently Asked Questions</h2>
+        <p className="text-xs text-charcoal-muted">Technical details on Meta Graph API compliance and workflow limitations.</p>
+      </motion.div>
+
+      <motion.div
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true }}
+        variants={staggerContainer}
+        className="divide-y divide-border border-y border-border"
+      >
+        {faqs.map((f, i) => (
+          <motion.div
+            key={i}
+            variants={staggerItem}
+            className="py-5 space-y-1.5 text-left"
+          >
+            <h3 className="text-sm font-semibold text-charcoal">{f.q}</h3>
+            <p className="text-xs text-charcoal-muted leading-relaxed">{f.a}</p>
+          </motion.div>
+        ))}
+      </motion.div>
     </section>
   );
 }
 
 function Footer() {
   return (
-    <footer className="border-t border-zinc-800/60 py-12 px-6">
-      <div className="max-w-6xl mx-auto">
-        <div className="flex flex-col sm:flex-row items-start justify-between gap-8">
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-fuchsia-500 to-violet-600 flex items-center justify-center text-white font-black text-[10px] tracking-tighter">
-                AD
-              </div>
-              <span className="font-bold text-sm text-white">AutoDm</span>
-            </div>
-            <p className="text-xs text-zinc-500 max-w-xs">
-              Comment-to-DM automation for Instagram Professional accounts. Built on the official Meta Instagram Graph API.
-            </p>
+    <footer className="border-t border-border bg-surface py-12 px-6 text-xs text-charcoal-muted">
+      <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="flex items-center gap-3">
+          <div className="w-6 h-6 rounded bg-charcoal flex items-center justify-center text-canvas font-semibold text-[10px]">
+            AD
           </div>
-
-          <div className="flex gap-12">
-            <div className="space-y-3">
-              <h4 className="text-xs font-semibold text-zinc-300 uppercase tracking-wider">Product</h4>
-              <div className="flex flex-col gap-2 text-xs text-zinc-500">
-                <a href="#features" className="hover:text-zinc-300 transition-colors">Features</a>
-                <a href="#how-it-works" className="hover:text-zinc-300 transition-colors">How It Works</a>
-                <a href="#security" className="hover:text-zinc-300 transition-colors">Security</a>
-              </div>
-            </div>
-            <div className="space-y-3">
-              <h4 className="text-xs font-semibold text-zinc-300 uppercase tracking-wider">Legal</h4>
-              <div className="flex flex-col gap-2 text-xs text-zinc-500">
-                <Link href="/privacy" className="hover:text-zinc-300 transition-colors">Privacy Policy</Link>
-                <Link href="/terms" className="hover:text-zinc-300 transition-colors">Terms of Service</Link>
-                <Link href="/data-deletion" className="hover:text-zinc-300 transition-colors">Data Deletion</Link>
-              </div>
-            </div>
-            <div className="space-y-3">
-              <h4 className="text-xs font-semibold text-zinc-300 uppercase tracking-wider">Account</h4>
-              <div className="flex flex-col gap-2 text-xs text-zinc-500">
-                <Link href="/login" className="hover:text-zinc-300 transition-colors">Sign In</Link>
-                <Link href="/signup" className="hover:text-zinc-300 transition-colors">Create Account</Link>
-              </div>
-            </div>
-          </div>
+          <span className="font-medium text-charcoal">AutoDm</span>
+          <span className="text-charcoal-light font-mono text-[11px]">v1.0 • Meta Graph API v26.0</span>
         </div>
 
-        <div className="mt-12 pt-6 border-t border-zinc-800/60 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-zinc-600">
-          <p>&copy; {new Date().getFullYear()} AutoDm. All rights reserved.</p>
-          <p>
-            Not affiliated with Meta Platforms, Inc. Instagram is a trademark of Meta Platforms, Inc.
-          </p>
+        <div className="flex items-center gap-6 font-medium">
+          <Link href="/privacy" className="hover:text-charcoal transition-colors">Privacy Policy</Link>
+          <Link href="/terms" className="hover:text-charcoal transition-colors">Terms of Service</Link>
+          <Link href="/data-deletion" className="hover:text-charcoal transition-colors">Data Deletion</Link>
+          <Link href="/login" className="hover:text-charcoal transition-colors">Sign In</Link>
+        </div>
+
+        <div className="text-[11px] text-charcoal-light font-mono">
+          &copy; {new Date().getFullYear()} AutoDm Platform.
         </div>
       </div>
     </footer>
@@ -357,13 +456,12 @@ function Footer() {
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 antialiased">
+    <div className="min-h-screen bg-canvas text-charcoal antialiased">
       <NavBar />
       <HeroSection />
+      <ProductShowcase />
       <FeaturesSection />
-      <HowItWorksSection />
-      <SecuritySection />
-      <CTASection />
+      <FAQSection />
       <Footer />
     </div>
   );

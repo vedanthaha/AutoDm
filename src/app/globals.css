@@ -1,36 +1,262 @@
+@import url('https://fonts.cdnfonts.com/css/nexa');
+
+/* ─── Nexa Font Faces (from DaFont / Fontfabric) ──────────────── */
+@font-face {
+  font-family: 'Nexa';
+  src: url('/fonts/nexa/Nexa-Light.woff') format('woff'),
+       url('/fonts/nexa/Nexa-ExtraLight.ttf') format('truetype');
+  font-weight: 300 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Nexa';
+  src: url('/fonts/nexa/Nexa-Bold.woff') format('woff'),
+       url('/fonts/nexa/Nexa-Heavy.ttf') format('truetype');
+  font-weight: 600 700 800 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Nexa Heavy';
+  src: url('/fonts/nexa/Nexa-Heavy.ttf') format('truetype');
+  font-weight: 800 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --background: #09090b;
-  --foreground: #fafafa;
-  --surface: #121215;
-  --surface-raised: #18181b;
-  --border-subtle: #27272a;
-  --border-strong: #3f3f46;
+  /* AutoDm Refined Design System Tokens — Apple & Linear Inspired */
+  --canvas: #F7F7F5;
+  --surface: #FFFFFF;
+  --surface-subdued: #F2F2EF;
+  --surface-hover: #ECECE9;
+  
+  --border: #E7E5E4;
+  --border-subtle: #F0EEE9;
+  --border-strong: #D6D3D1;
+  
+  --text-primary: #191919;
+  --text-secondary: #737373;
+  --text-tertiary: #A8A29E;
+  
+  --accent: #A33B56;
+  --accent-hover: #8F3149;
+  --accent-muted: #F8EDF0;
+  --accent-border: #E8CCD4;
+
+  --success-text: #15803D;
+  --success-bg: #F0FDF4;
+  --success-border: #BBF7D0;
+
+  --warning-text: #B45309;
+  --warning-bg: #FFFBEB;
+  --warning-border: #FDE68A;
+
+  --danger-text: #B91C1C;
+  --danger-bg: #FEF2F2;
+  --danger-border: #FECACA;
+
+  --background: var(--canvas);
+  --foreground: var(--text-primary);
+
+  /* Animation tokens */
+  --transition-fast: 150ms;
+  --transition-base: 250ms;
+  --transition-slow: 400ms;
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
 }
+
+/* ─── Dark Theme Tokens ─────────────────────────────────────── */
+.dark {
+  --canvas: #0A0A0B;
+  --surface: #141416;
+  --surface-subdued: #1A1A1E;
+  --surface-hover: #222226;
+  
+  --border: #2A2A2E;
+  --border-subtle: #1E1E22;
+  --border-strong: #3A3A40;
+  
+  --text-primary: #ECECEC;
+  --text-secondary: #8B8B8B;
+  --text-tertiary: #5C5C5C;
+  
+  --accent: #D4637E;
+  --accent-hover: #E07A95;
+  --accent-muted: #2A1620;
+  --accent-border: #4A2030;
+
+  --success-text: #4ADE80;
+  --success-bg: #0A1F12;
+  --success-border: #14532D;
+
+  --warning-text: #FBBF24;
+  --warning-bg: #1C1508;
+  --warning-border: #713F12;
+
+  --danger-text: #F87171;
+  --danger-bg: #1F0A0A;
+  --danger-border: #7F1D1D;
+
+  --background: var(--canvas);
+  --foreground: var(--text-primary);
+}
+
+/* ─── Body Defaults ─────────────────────────────────────────── */
 
 body {
-  background-color: var(--background);
-  color: var(--foreground);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background-color: var(--canvas);
+  color: var(--text-primary);
+  font-family: 'Nexa', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  letter-spacing: -0.01em;
+  transition: background-color var(--transition-base) var(--ease-out-expo),
+              color var(--transition-base) var(--ease-out-expo);
 }
 
-/* Custom minimal scrollbar */
+/* ─── Smooth theme transitions ──────────────────────────────── */
+
+*, *::before, *::after {
+  transition-property: background-color, border-color, color, fill, stroke, box-shadow;
+  transition-duration: var(--transition-base);
+  transition-timing-function: var(--ease-out-expo);
+}
+
+/* Opt-out for elements that need instant transitions */
+.no-transition,
+.no-transition *,
+input,
+textarea,
+select,
+button {
+  transition-property: none !important;
+}
+
+/* Re-enable for buttons/inputs on hover/focus only */
+button, a {
+  transition: background-color var(--transition-fast) ease,
+              color var(--transition-fast) ease,
+              border-color var(--transition-fast) ease,
+              transform var(--transition-fast) ease,
+              box-shadow var(--transition-fast) ease !important;
+}
+
+/* ─── Custom Scrollbars ─────────────────────────────────────── */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #09090b;
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #27272a;
-  border-radius: 3px;
+  background: var(--border-strong);
+  border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #3f3f46;
+  background: var(--text-tertiary);
+}
+
+/* ─── Focus ring utility ────────────────────────────────────── */
+.focus-ring {
+  @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-[#A33B56]/30 focus-visible:border-[#A33B56];
+}
+
+.dark .focus-ring {
+  @apply focus-visible:ring-[#D4637E]/30 focus-visible:border-[#D4637E];
+}
+
+/* ─── Glass morphism utility ────────────────────────────────── */
+.glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+}
+
+.dark .glass {
+  background: rgba(20, 20, 22, 0.75);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+}
+
+/* ─── Glow effects ──────────────────────────────────────────── */
+.glow-accent {
+  box-shadow: 0 0 20px rgba(163, 59, 86, 0.15),
+              0 0 60px rgba(163, 59, 86, 0.05);
+}
+
+.dark .glow-accent {
+  box-shadow: 0 0 20px rgba(212, 99, 126, 0.2),
+              0 0 60px rgba(212, 99, 126, 0.08);
+}
+
+/* ─── Gradient text utility ─────────────────────────────────── */
+.gradient-text {
+  background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ─── Animated gradient border ──────────────────────────────── */
+@keyframes gradient-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.animated-border {
+  background: linear-gradient(90deg, var(--accent), var(--accent-hover), var(--accent));
+  background-size: 200% 100%;
+  animation: gradient-shift 3s ease infinite;
+}
+
+/* ─── Pulse dot animation ───────────────────────────────────── */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.3); }
+}
+
+.pulse-dot {
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+/* ─── Shimmer loading effect ────────────────────────────────── */
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.08),
+    transparent
+  );
+  animation: shimmer 2s infinite;
+}
+
+.dark .shimmer::after {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.04),
+    transparent
+  );
 }
