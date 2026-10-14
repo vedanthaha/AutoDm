@@ -1,12 +1,14 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServiceRoleClient, getSupabaseClient } from '@/lib/supabase';
 import { decryptToken } from '@/lib/crypto';
-import { getAccountWebhookSubscriptions, subscribeAccountWebhooks } from '@/lib/meta';
+import { getAccountWebhookSubscriptions, subscribeAccountWebhooks, sendPublicCommentReply } from '@/lib/meta';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const testCommentId = request.nextUrl.searchParams.get('test_comment_id');
+  let testCommentResult: any = null;
   const hasUrl = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL);
   const hasAnonKey = Boolean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
   const hasServiceKey = Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY);
@@ -42,6 +44,14 @@ export async function GET() {
             currentSubscriptions: subs,
             reSubscribeAttempt: reSub,
           };
+
+          if (testCommentId) {
+            testCommentResult = await sendPublicCommentReply(
+              testCommentId,
+              token,
+              'Sent to your DM! Check your requests 📩'
+            );
+          }
         } else {
           metaWebhookCheck = { tested: false, error: 'Token decryption failed' };
         }
@@ -80,5 +90,6 @@ export async function GET() {
     serviceResult,
     metaWebhookCheck,
     anonResult,
+    testCommentResult,
   });
 }

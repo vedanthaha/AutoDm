@@ -77,6 +77,7 @@ export async function saveRule(rule: Partial<AutomationRule>): Promise<Automatio
     name: rule.name || 'Untitled Automation',
     trigger_keywords: rule.trigger_keywords || ['link'],
     reply_template: rule.reply_template || 'Hey {{username}}! Thanks for commenting.',
+    comment_reply_template: rule.comment_reply_template || 'Sent to your DM! Check your requests 📩',
     post_id: rule.post_id || null,
     post_caption: rule.post_caption || (rule.post_id ? 'Specific Post' : 'All Posts & Reels'),
     is_active: rule.is_active !== undefined ? rule.is_active : true,
@@ -87,11 +88,23 @@ export async function saveRule(rule: Partial<AutomationRule>): Promise<Automatio
   };
 
   if (isSupabaseConfigured && supabase) {
-    const { data, error } = await supabase
+    const payload: any = { ...newRule };
+    let { data, error } = await supabase
       .from('automation_rules')
-      .upsert(newRule)
+      .upsert(payload)
       .select()
       .single();
+
+    if (error && error.message?.includes('comment_reply_template')) {
+      delete payload.comment_reply_template;
+      const retry = await supabase
+        .from('automation_rules')
+        .upsert(payload)
+        .select()
+        .single();
+      data = retry.data;
+      error = retry.error;
+    }
 
     if (error) {
       console.error('[Storage] Error saving rule to Supabase:', error.message);

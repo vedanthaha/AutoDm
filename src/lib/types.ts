@@ -39,6 +39,7 @@ export interface AutomationRule {
   name: string;
   trigger_keywords: string[];
   reply_template: string;
+  comment_reply_template?: string;
   post_id: string | null; // null = all posts & reels
   post_caption?: string;
   post_thumbnail_url?: string;
@@ -114,6 +115,20 @@ export interface PrivateReplyResult {
   };
   fb_trace_id?: string;
   simulation?: boolean;
+}
+
+export interface PublicCommentReplyResult {
+  success: boolean;
+  id?: string;
+  status?: number;
+  error?: {
+    message: string;
+    type?: string;
+    code?: number;
+    error_subcode?: number;
+    fbtrace_id?: string;
+  };
+  fb_trace_id?: string;
 }
 
 export interface AppModeState {

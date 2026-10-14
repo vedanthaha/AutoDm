@@ -14,7 +14,8 @@ import {
   getAccountWebhookSubscriptions,
   unsubscribeAccountWebhooks,
   getInstagramMedia,
-  sendPrivateReply
+  sendPrivateReply,
+  sendPublicCommentReply
 } from '../src/lib/meta.ts';
 
 test('Instagram Config: defaults to v26.0 and graph.instagram.com', () => {
@@ -354,3 +355,46 @@ test('Private Reply: sendPrivateReply sends recipient.comment_id to v26.0 /{user
     globalThis.fetch = originalFetch;
   }
 });
+
+test('Public Comment Reply: sendPublicCommentReply calls /{comment_id}/replies with message', async () => {
+  const originalFetch = globalThis.fetch;
+  let interceptedUrl = '';
+  let interceptedMethod = '';
+  let interceptedHeaders = {};
+  let interceptedBody = null;
+
+  globalThis.fetch = async (url, opts) => {
+    interceptedUrl = String(url);
+    interceptedMethod = opts.method;
+    interceptedHeaders = opts.headers;
+    interceptedBody = JSON.parse(opts.body);
+    return {
+      ok: true,
+      status: 200,
+      headers: { get: (h) => (h === 'x-fb-trace-id' ? 'Trace-XYZ-999' : null) },
+      json: async () => ({
+        id: 'reply_comment_180999999999'
+      })
+    };
+  };
+
+  try {
+    const result = await sendPublicCommentReply(
+      '18081183368414549',
+      'long_lived_token_xyz',
+      'Sent to your DM! Check your requests 📩'
+    );
+
+    assert.equal(interceptedMethod, 'POST');
+    assert.equal(interceptedUrl.includes('/18081183368414549/replies'), true);
+    assert.equal(interceptedHeaders['Authorization'], 'Bearer long_lived_token_xyz');
+    assert.equal(interceptedBody.message, 'Sent to your DM! Check your requests 📩');
+
+    assert.equal(result.success, true);
+    assert.equal(result.id, 'reply_comment_180999999999');
+    assert.equal(result.fb_trace_id, 'Trace-XYZ-999');
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+

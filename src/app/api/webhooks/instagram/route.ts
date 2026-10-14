@@ -14,7 +14,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { getSupabaseServiceRoleClient } from '@/lib/supabase';
 import { matchComment, renderReplyTemplate } from '@/lib/matcher';
-import { sendPrivateReply } from '@/lib/meta';
+import { sendPrivateReply, sendPublicCommentReply } from '@/lib/meta';
 import { decryptToken } from '@/lib/crypto';
 import { recordDispatch } from '@/lib/storage';
 
@@ -178,6 +178,23 @@ export async function POST(req: NextRequest) {
               const result = await sendPrivateReply(igUserId, pageToken, commentId, replyText);
 
               if (result.success) {
+                // Also dispatch Public Comment Reply directly under the user's comment
+                const publicReplyTemplate = matchedRule.comment_reply_template || 'Sent to your DM! Check your requests 📩';
+                const publicReplyText = renderReplyTemplate(publicReplyTemplate, {
+                  username: authorUsername,
+                });
+
+                try {
+                  const commentReplyResult = await sendPublicCommentReply(commentId, pageToken, publicReplyText);
+                  if (commentReplyResult.success) {
+                    console.log(`[Webhook] Public comment reply posted: ${commentReplyResult.id}`);
+                  } else {
+                    console.warn('[Webhook] Public comment reply notice:', commentReplyResult.error);
+                  }
+                } catch (publicErr) {
+                  console.warn('[Webhook] Public comment reply error:', (publicErr as Error).message);
+                }
+
                 await supabase.from('comment_dispatches').update({
                   account_id: account.id,
                   user_id: account.user_id,

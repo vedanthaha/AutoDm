@@ -18,6 +18,7 @@ export function RuleModal({ isOpen, onClose, rule, accounts, activeAccountId, on
   const [name, setName] = useState('');
   const [keywords, setKeywords] = useState('');
   const [template, setTemplate] = useState('Hey {{username}}! Here is the link you requested: https://');
+  const [commentReplyTemplate, setCommentReplyTemplate] = useState('Sent to your DM! Check your requests 📩');
   const [accountId, setAccountId] = useState(activeAccountId);
   const [isActive, setIsActive] = useState(true);
   const [matchType, setMatchType] = useState<'contains' | 'exact'>('contains');
@@ -32,6 +33,7 @@ export function RuleModal({ isOpen, onClose, rule, accounts, activeAccountId, on
       setName(rule.name);
       setKeywords(rule.trigger_keywords.join(', '));
       setTemplate(rule.reply_template);
+      setCommentReplyTemplate(rule.comment_reply_template || 'Sent to your DM! Check your requests 📩');
       setAccountId(rule.account_id);
       setIsActive(rule.is_active);
       setMatchType(rule.match_type);
@@ -42,6 +44,7 @@ export function RuleModal({ isOpen, onClose, rule, accounts, activeAccountId, on
       setName('');
       setKeywords('link, guide, dm');
       setTemplate('Hey {{username}}! Here is the link you requested: https://example.com/starter');
+      setCommentReplyTemplate('Sent to your DM! Check your requests 📩');
       setAccountId(activeAccountId || accounts[0]?.id || '');
       setIsActive(true);
       setMatchType('contains');
@@ -87,6 +90,7 @@ export function RuleModal({ isOpen, onClose, rule, accounts, activeAccountId, on
           name: name.trim() || 'Untitled Automation',
           trigger_keywords: parsedKeywords,
           reply_template: template,
+          comment_reply_template: commentReplyTemplate.trim() || 'Sent to your DM! Check your requests 📩',
           is_active: isActive,
           match_type: matchType,
           post_id: postId,
@@ -214,6 +218,35 @@ export function RuleModal({ isOpen, onClose, rule, accounts, activeAccountId, on
             <div className="mt-1 p-2 rounded bg-zinc-950 border border-zinc-800/80 text-[11px] text-zinc-400">
               <span className="text-zinc-500 font-medium">Meta Restriction:</span> Private replies must be sent within 7 days. Only 1 private reply permitted per comment ID.
             </div>
+          </div>
+
+          {/* Public Comment Reply */}
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block font-medium text-zinc-300">
+                Public Comment Reply <span className="text-xs text-zinc-500 font-normal">(Posted on the post under their comment)</span>
+              </label>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] text-zinc-500">Insert tag:</span>
+                <button
+                  type="button"
+                  onClick={() => setCommentReplyTemplate(prev => prev + ' @{{username}}')}
+                  className="px-1.5 py-0.5 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-[10px] font-mono border border-zinc-700"
+                >
+                  {`@{{username}}`}
+                </button>
+              </div>
+            </div>
+            <input
+              type="text"
+              value={commentReplyTemplate}
+              onChange={e => setCommentReplyTemplate(e.target.value)}
+              placeholder="Sent to your DM! Check your requests 📩"
+              className="w-full px-3 py-2 rounded-lg bg-zinc-950 border border-zinc-800 text-zinc-200 focus:outline-none focus:border-zinc-600 font-mono text-xs"
+            />
+            <p className="mt-1 text-[11px] text-zinc-500">
+              AutoDm posts this comment directly on the post so the user receives an Instagram reply notification and knows to check their DM requests.
+            </p>
           </div>
 
           <div className="grid grid-cols-2 gap-3 pt-1">

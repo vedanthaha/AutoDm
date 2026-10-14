@@ -16,7 +16,7 @@
  * - Private Reply: POST https://graph.instagram.com/{v}/{user_id}/messages
  */
 
-import type { PrivateReplyResult, InstagramMedia } from './types.ts';
+import type { PrivateReplyResult, InstagramMedia, PublicCommentReplyResult } from './types.ts';
 
 export const META_API_VERSION = process.env.META_GRAPH_API_VERSION || 'v26.0';
 export const META_API_HOST = process.env.META_API_HOST || 'graph.instagram.com';
@@ -303,4 +303,90 @@ export async function sendPrivateReply(
       },
     };
   }
+}
+
+/**
+ * Step 8: Posts a Public Comment Reply directly under an Instagram Comment
+ *
+ * Endpoint: POST https://graph.facebook.com/{version}/{comment_id}/replies
+ * Fallback: POST https://graph.instagram.com/{version}/{comment_id}/replies
+ * Parameters: message
+ */
+export async function sendPublicCommentReply(
+  commentId: string,
+  accessToken: string,
+  message: string
+): Promise<PublicCommentReplyResult> {
+  const hosts = ['graph.facebook.com', META_API_HOST];
+  let lastError: any = null;
+  let lastStatus = 0;
+  let lastTraceId: string | undefined = undefined;
+
+  for (const host of hosts) {
+    try {
+      const endpoint = `https://${host}/${META_API_VERSION}/${commentId}/replies`;
+
+      // 1. Try JSON body with Authorization Bearer header
+      const jsonRes = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ message }),
+      });
+
+      const jsonData = await jsonRes.json();
+      const fbTraceId = jsonRes.headers.get('x-fb-trace-id') || jsonData?.error?.fbtrace_id || undefined;
+      lastStatus = jsonRes.status;
+      lastTraceId = fbTraceId;
+
+      if (jsonRes.ok && jsonData.id) {
+        return {
+          success: true,
+          status: jsonRes.status,
+          id: jsonData.id,
+          fb_trace_id: fbTraceId,
+        };
+      }
+
+      // 2. If rejected with JSON, try application/x-www-form-urlencoded
+      const formParams = new URLSearchParams();
+      formParams.append('message', message);
+      formParams.append('access_token', accessToken);
+
+      const formRes = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: formParams.toString(),
+      });
+
+      const formData = await formRes.json();
+      const formTraceId = formRes.headers.get('x-fb-trace-id') || formData?.error?.fbtrace_id || undefined;
+      lastStatus = formRes.status;
+      lastTraceId = formTraceId;
+
+      if (formRes.ok && formData.id) {
+        return {
+          success: true,
+          status: formRes.status,
+          id: formData.id,
+          fb_trace_id: formTraceId,
+        };
+      }
+
+      lastError = formData.error || jsonData.error || { message: 'Meta rejected comment reply' };
+    } catch (err) {
+      lastError = { message: (err as Error).message, type: 'NetworkError' };
+    }
+  }
+
+  return {
+    success: false,
+    status: lastStatus,
+    error: lastError,
+    fb_trace_id: lastTraceId,
+  };
 }
