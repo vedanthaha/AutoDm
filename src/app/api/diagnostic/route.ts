@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseServiceRoleClient, getSupabaseClient } from '@/lib/supabase';
+import { decryptToken } from '@/lib/crypto';
+import { getAccountWebhookSubscriptions, subscribeAccountWebhooks } from '@/lib/meta';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -15,6 +17,7 @@ export async function GET() {
   const anonClient = getSupabaseClient();
 
   let serviceResult: any = { tested: false };
+  let metaWebhookCheck: any = { tested: false };
   if (serviceClient) {
     try {
       const { data, error, count } = await serviceClient
@@ -24,9 +27,25 @@ export async function GET() {
         tested: true,
         ok: !error,
         count: count ?? data?.length,
-        data,
+        data: data?.map(a => ({ id: a.id, username: a.username, ig_id: a.instagram_user_id })),
         error: error ? error.message : null,
       };
+
+      if (data && data.length > 0) {
+        const acc = data[0];
+        const token = decryptToken(acc.encrypted_access_token);
+        if (token) {
+          const subs = await getAccountWebhookSubscriptions(acc.instagram_user_id, token);
+          const reSub = await subscribeAccountWebhooks(acc.instagram_user_id, token, 'comments,messages');
+          metaWebhookCheck = {
+            tested: true,
+            currentSubscriptions: subs,
+            reSubscribeAttempt: reSub,
+          };
+        } else {
+          metaWebhookCheck = { tested: false, error: 'Token decryption failed' };
+        }
+      }
     } catch (e) {
       serviceResult = { tested: true, ok: false, error: (e as Error).message };
     }
@@ -59,6 +78,7 @@ export async function GET() {
       hasAppSecret,
     },
     serviceResult,
+    metaWebhookCheck,
     anonResult,
   });
 }
